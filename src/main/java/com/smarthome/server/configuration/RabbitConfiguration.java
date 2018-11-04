@@ -13,13 +13,17 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-@EnableRabbit
-@Configuration
+
+
+//@EnableRabbit
+//@Configuration
 public class RabbitConfiguration {
 
     @Autowired
@@ -37,6 +41,12 @@ public class RabbitConfiguration {
         return connectionFactory;
     }
 
+
+    @Bean
+    public MessageConverter jsonMessageConverter(){
+        return new Jackson2JsonMessageConverter();
+    }
+
     @Bean
     public AmqpAdmin amqpAdmin() {
         return new RabbitAdmin(connectionFactory());
@@ -45,7 +55,7 @@ public class RabbitConfiguration {
     @Bean
     public RabbitTemplate rabbitTemplate() {
         final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory());
-        //rabbitTemplate.setMessageConverter(jsonMessageConverter());
+        rabbitTemplate.setMessageConverter(jsonMessageConverter());
         return rabbitTemplate;
     }
 
@@ -64,10 +74,9 @@ public class RabbitConfiguration {
                     //ObjectMapper objectMapper = new ObjectMapper();
                     //SimpleSensor simpleSensor = objectMapper.readValue(new String(message.getBody()), SimpleSensor.class);
                     // System.out.println(simpleSensor);
-                    System.out.println(message.getMessageProperties().getReceivedRoutingKey() + ": " + new String(message.getBody()));
-                    deviceValueDayService.addValueFromDevice("1", Float.parseFloat(new String(message.getBody())));
-
-
+                    /*System.out.println(message.getMessageProperties().getConsumerQueue() + ": " + new String(message.getBody()));
+                    deviceValueDayService.addValueFromDevice(message.getMessageProperties().getConsumerQueue().split("_")[1],
+                            Float.parseFloat(new String(message.getBody())));*/
                 }catch (Exception e) {
                 }
             }

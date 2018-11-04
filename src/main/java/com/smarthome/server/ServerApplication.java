@@ -1,5 +1,7 @@
 package com.smarthome.server;
 
+import com.smarthome.server.model.Device;
+import com.smarthome.server.repository.DeviceRepository;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -26,6 +28,9 @@ public class ServerApplication {
     @Autowired
     AmqpAdmin amqpAdmin;
 
+    @Autowired
+    private DeviceRepository deviceRepository;
+
 
 
     public static void main(String[] args) {
@@ -33,41 +38,38 @@ public class ServerApplication {
     }
 
     @PostConstruct
+    public void mqttInit() {
+
+    }
+
+
+
+    //@PostConstruct
     public void init() {
-        /*List<String> queueList = new ArrayList<>();
-        queueList.forEach(queue -> System.out.println(queue));
-        Queue queue = new Queue("sensors_sensor4");
-        amqpAdmin.declareQueue(queue);
-        amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic)
-                .with("sensors.sensor4"));
-        queueList.add("sensors_sensor4");
+
+        /*List<Device> devices = this.deviceRepository.findAll();
+        List<String> queueList = new ArrayList<>();
+        Queue queue = null;
+        for (int i = 0; i < devices.size(); i++) {
+            queue = new Queue(devices.get(i).getQueueName());
+            amqpAdmin.declareQueue(queue);
+            amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic).with("sensors.home." +
+                    devices.get(i).getName()));
+            queueList.add(devices.get(i).getQueueName());
+        }
         String[] queueArr = new String[queueList.size()];
         simpleMessageListenerContainer.setQueueNames(queueList.toArray(queueArr));*/
 
         List<String> queueList = new ArrayList<>();
-        queueList.forEach(queue -> System.out.println(queue));
-        Queue queue = new Queue("_tempBedroom");
+        Queue queue = queue = new Queue("mqtt-subscription-arduino-homeqos0", false, false, false);
+
         amqpAdmin.declareQueue(queue);
-        amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic)
-                .with("sensors.home.tempBedroom"));
-        queueList.add("_tempBedroom");
-        queue = new Queue("_tempBathroom");
-        amqpAdmin.declareQueue(queue);
-        amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic)
-                .with("sensors.home.tempBathroom"));
-        queueList.add("_tempBathroom");
-        queue = new Queue("_tempKitchen");
-        amqpAdmin.declareQueue(queue);
-        amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic)
-                .with("sensors.home.tempKitchen"));
-        queueList.add("_tempKitchen");
-        queue = new Queue("_tempKitchenFloor");
-        amqpAdmin.declareQueue(queue);
-        amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic)
-                .with("sensors.home.tempKitchenFloor"));
-        queueList.add("_tempKitchenFloor");
-        String[] queueArr = new String[queueList.size()];
-        simpleMessageListenerContainer.setQueueNames(queueList.toArray(queueArr));
+        amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic).with("sensors.home.vgd1"));
+        amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(amqTopic).with("sensors.home.vgd2"));
+        //queueList.add(queue.getName());
+        //String[] queueArr = new String[queueList.size()];
+        //simpleMessageListenerContainer.setQueueNames(queueList.toArray(queueArr));
+        //simpleMessageListenerContainer.addQueueNames("mqtt-subscription-arduino-homeqos0");
 
     }
 }

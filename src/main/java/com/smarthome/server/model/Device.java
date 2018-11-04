@@ -11,8 +11,9 @@ import lombok.NoArgsConstructor;
 public class Device {
 
     private String _id;
-    // private String deviceId;
+    private String boardId;
     private String name;
+    private String topic;
 
     /*public Device() {
     }*/
