@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +17,7 @@ public class DiscreteActuator extends Device {
     //private Date date;
 
     private Boolean on;
+    Map<String, String> map;
 
 
 

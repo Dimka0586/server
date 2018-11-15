@@ -40,13 +40,16 @@ public class DeviceController {
         return deviceRepository.findAll();
     }
 
+
     @PostMapping
     public Device createDevice(@RequestBody Device device) {
-        return null;
+        return this.deviceRepository.save(device);
     }
 
 
+    private void addToBroker(Device device) {
 
+    }
 
     /*@PostMapping
     public Device createDevice(@RequestBody Device device) {

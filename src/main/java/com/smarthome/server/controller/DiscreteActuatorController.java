@@ -1,5 +1,6 @@
 package com.smarthome.server.controller;
 
+import com.smarthome.server.configuration.MqttTemplate;
 import com.smarthome.server.model.Device;
 import com.smarthome.server.model.DiscreteActuator;
 import com.smarthome.server.repository.DiscreteActuatorRepository;
@@ -35,6 +36,9 @@ public class DiscreteActuatorController {
     @Autowired
     DiscreteActuatorRepository discreteActuatorRepository;
 
+    @Autowired
+    private MqttTemplate mqttTemplate;
+
     public DiscreteActuatorController() {
 
     }
@@ -47,13 +51,14 @@ public class DiscreteActuatorController {
 
     @PostMapping
     public DiscreteActuator createDiscreteActuator(@RequestBody DiscreteActuator discreteActuator) {
-
-        return null;
+        return this.discreteActuatorRepository.save(discreteActuator);
     }
 
     @PutMapping
     public DiscreteActuator updateDiscreteActuator(@RequestBody DiscreteActuator actuator) {
-        return null;
+        actuator = this.discreteActuatorRepository.save(actuator);
+        this.mqttTemplate.convertAndSend(actuator.getTopic(), actuator, 1);
+        return actuator;
     }
 
     /*@PostMapping

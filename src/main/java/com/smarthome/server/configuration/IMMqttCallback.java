@@ -1,5 +1,6 @@
 package com.smarthome.server.configuration;
 
+import com.smarthome.server.service.DeviceValueDayService;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,9 @@ public class IMMqttCallback implements MqttCallback {
 
     //@Autowired
     //private MqttClient mqttClient;
+    @Autowired
+    private DeviceValueDayService deviceValueDayService;
+
 
     @Override
     public void connectionLost(Throwable cause) {
@@ -27,6 +31,8 @@ public class IMMqttCallback implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) {
         System.out.println(topic + ": " + new String(message.getPayload()));
+        deviceValueDayService.addValueFromDevice(topic,
+                Float.parseFloat(new String(message.getPayload())));
         /*redisTemplate.opsForList().leftPush(
                 MqttClientFactory.redisArrivedPrefix.concat(mqttClient.getClientId()),
                 topic.concat(";").concat(message.toString()));

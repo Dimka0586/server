@@ -3,6 +3,12 @@ package com.smarthome.server;
 import com.smarthome.server.configuration.MqttTemplate;
 import com.smarthome.server.model.Device;
 import com.smarthome.server.model.DiscreteActuator;
+import com.smarthome.server.model.types.BaseType;
+import com.smarthome.server.model.types.CustomInstance;
+import com.smarthome.server.model.types.CustomType;
+import com.smarthome.server.model.types.NumberType;
+import com.smarthome.server.repository.CustomInstanceRepository;
+import com.smarthome.server.repository.CustomTypeRepository;
 import com.smarthome.server.repository.DeviceRepository;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -18,7 +24,9 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootApplication
 public class ServerApplication {
@@ -32,7 +40,7 @@ public class ServerApplication {
     @Autowired
     AmqpAdmin amqpAdmin;*/
 
-    @Autowired
+    //@Autowired
     MqttClient mqttClient;
 
     @Autowired
@@ -41,24 +49,70 @@ public class ServerApplication {
     @Autowired
     private DeviceRepository deviceRepository;
 
+    @Autowired
+    NumberType numberType;
+
+    @Autowired
+    CustomTypeRepository customTypeRepository;
+
+    @Autowired
+    CustomInstanceRepository customInstanceRepository;
+
 
 
     public static void main(String[] args) {
         SpringApplication.run(ServerApplication.class, args);
     }
 
-    @PostConstruct
+    // @PostConstruct
     public void mqttInit() {
+        System.out.println(numberType.getName());
         try {
             this.mqttClient.subscribe(new String[]{"/sensors/home/tempKitchen", "/sensors/home/tempKitchenFloor",
                     "/sensors/home/tempBedroom"});
         } catch (MqttException e) {
             e.printStackTrace();
         }
-        DiscreteActuator discreteActuator = new DiscreteActuator(false);
+        Map<String, String> map = new HashMap<>();
+        map.put("first", "value1");
+        map.put("second", "value2");
+        map.put("third", "value3");
+        map.put("first", "value1");
+        DiscreteActuator discreteActuator = new DiscreteActuator(false, map);
         this.mqttTemplate.convertAndSend("/controls/home/pumpKitchen", discreteActuator, 1);
     }
+    @PostConstruct
+    public void testTypes() {
+        Map<String, BaseType> scaleFields = new HashMap<>();
+        scaleFields.put("minIn", numberType);
+        scaleFields.put("maxIn", numberType);
+        scaleFields.put("minOut", numberType);
+        scaleFields.put("maxOut", numberType);
 
+        CustomType scale = new CustomType();
+        scale.setFields(scaleFields);
+        scale = customTypeRepository.save(scale);
+
+        Map<String, BaseType> anSensorFields = new HashMap<>();
+        anSensorFields.put("in", numberType);
+        anSensorFields.put("scale", scale);
+
+        CustomType anSensor = new CustomType();
+        anSensor.setFields(anSensorFields);
+
+        anSensor = customTypeRepository.save(anSensor);
+
+        CustomInstance temp1 = new CustomInstance();
+        temp1.setObj(anSensor);
+        ((NumberType)temp1.getObj().getFields().get("in")).setValue(25.5);
+        //temp1 = customInstanceRepository.save(temp1);
+        temp1 = customInstanceRepository.findById("5bedd9c467823a0520b86333").get();
+        System.out.println(temp1.getObj().getFields().get("in")
+        );
+
+
+
+    }
 
 
     //@PostConstruct
