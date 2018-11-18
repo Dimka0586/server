@@ -5,16 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-public class CustomInstance {
+public class CustomExchange {
 
-    private String _id;
-    private String name;
-    private CustomType obj;
-
-
-
+    private String ciId;
+    private String topic;
+    private Map<String, SimpleType> pathValues;
 }

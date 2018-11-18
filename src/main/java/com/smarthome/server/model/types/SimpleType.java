@@ -10,6 +10,5 @@ import org.springframework.stereotype.Component;
 @Data
 public class SimpleType<T> extends BaseType {
 
-    private String path;
     private T value;
 }

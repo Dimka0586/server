@@ -7,10 +7,10 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 @Scope("prototype")
-public class StringType extends SimpleType<String> {
+public class FloatType  extends SimpleType<Float> {
 
-    public StringType() {
-        super("");
-        this.setName("string");
+    public FloatType() {
+        super(0.0f);
+        this.setName("float");
     }
 }

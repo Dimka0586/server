@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class BooleanType extends SimpleType<Boolean> {
 
     public BooleanType() {
-        super("boolean", false);
+        // super("boolean", false);
+        super(false);
     }
 }

@@ -3,10 +3,8 @@ package com.smarthome.server;
 import com.smarthome.server.configuration.MqttTemplate;
 import com.smarthome.server.model.Device;
 import com.smarthome.server.model.DiscreteActuator;
-import com.smarthome.server.model.types.BaseType;
-import com.smarthome.server.model.types.CustomInstance;
-import com.smarthome.server.model.types.CustomType;
-import com.smarthome.server.model.types.NumberType;
+import com.smarthome.server.model.types.*;
+import com.smarthome.server.repository.CustomExchangeRepository;
 import com.smarthome.server.repository.CustomInstanceRepository;
 import com.smarthome.server.repository.CustomTypeRepository;
 import com.smarthome.server.repository.DeviceRepository;
@@ -14,6 +12,7 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.BindingBuilder;
+
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
@@ -40,14 +39,14 @@ public class ServerApplication {
     @Autowired
     AmqpAdmin amqpAdmin;*/
 
-    //@Autowired
+    @Autowired
     MqttClient mqttClient;
 
     @Autowired
     MqttTemplate mqttTemplate;
 
     @Autowired
-    private DeviceRepository deviceRepository;
+    DeviceRepository deviceRepository;
 
     @Autowired
     NumberType numberType;
@@ -58,7 +57,20 @@ public class ServerApplication {
     @Autowired
     CustomInstanceRepository customInstanceRepository;
 
+    @Autowired
+    FloatType floatType;
 
+    @Autowired
+    IntegerType integerType;
+
+    @Autowired
+    StringType stringType;
+
+    @Autowired
+    BooleanType booleanType;
+
+    @Autowired
+    CustomExchangeRepository customExchangeRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(ServerApplication.class, args);
@@ -81,34 +93,62 @@ public class ServerApplication {
         DiscreteActuator discreteActuator = new DiscreteActuator(false, map);
         this.mqttTemplate.convertAndSend("/controls/home/pumpKitchen", discreteActuator, 1);
     }
-    @PostConstruct
-    public void testTypes() {
-        Map<String, BaseType> scaleFields = new HashMap<>();
-        scaleFields.put("minIn", numberType);
-        scaleFields.put("maxIn", numberType);
-        scaleFields.put("minOut", numberType);
-        scaleFields.put("maxOut", numberType);
+    // @PostConstruct
+    public void testTypes() throws MqttException {
 
+        customTypeRepository.deleteAll();
+        customInstanceRepository.deleteAll();
+        customExchangeRepository.deleteAll();
+
+
+        Map<String, BaseType> scaleFields = new HashMap<>();
+        scaleFields.put("minIn", floatType);
+        scaleFields.put("maxIn", floatType);
+        scaleFields.put("minOut", floatType);
+        scaleFields.put("maxOut", floatType);
+
+        // CustomType scale = CustomType.builder().fields(scaleFields).build();
         CustomType scale = new CustomType();
         scale.setFields(scaleFields);
+        scale.buildPathValues("", scale.getFields());
         scale = customTypeRepository.save(scale);
 
         Map<String, BaseType> anSensorFields = new HashMap<>();
-        anSensorFields.put("in", numberType);
+        anSensorFields.put("in", floatType);
         anSensorFields.put("scale", scale);
 
+        // CustomType anSensor = CustomType.builder().fields(anSensorFields).build();
         CustomType anSensor = new CustomType();
         anSensor.setFields(anSensorFields);
-
+        anSensor.buildPathValues("", anSensor.getFields());
         anSensor = customTypeRepository.save(anSensor);
 
-        CustomInstance temp1 = new CustomInstance();
-        temp1.setObj(anSensor);
-        ((NumberType)temp1.getObj().getFields().get("in")).setValue(25.5);
-        //temp1 = customInstanceRepository.save(temp1);
-        temp1 = customInstanceRepository.findById("5bedd9c467823a0520b86333").get();
-        System.out.println(temp1.getObj().getFields().get("in")
-        );
+        Map<String, BaseType> bundleAnSensorsFields = new HashMap<>();
+        bundleAnSensorsFields.put("name", stringType);
+        bundleAnSensorsFields.put("active", booleanType);
+        bundleAnSensorsFields.put("temp", anSensor);
+        bundleAnSensorsFields.put("hum", anSensor);
+
+        // CustomType bundleAnSensors = CustomType.builder().fields(bundleAnSensorsFields).build();
+        CustomType bundleAnSensors = new CustomType();
+        bundleAnSensors.setFields(bundleAnSensorsFields);
+        bundleAnSensors.buildPathValues("", bundleAnSensors.getFields());
+        customTypeRepository.save(bundleAnSensors);
+
+        CustomInstance tempHum1 = CustomInstance.builder().name("tempHum1").obj(bundleAnSensors).build();
+        tempHum1 = customInstanceRepository.save(tempHum1);
+        CustomExchange tempHum1Ex = CustomExchange.builder()
+                .topic("/sensors/home/" + tempHum1.getName())
+                .pathValues(tempHum1.getObj().getPathValues()).build();
+        ((FloatType)tempHum1Ex.getPathValues().get("hum/in")).setValue(25.2f);
+        tempHum1Ex = customExchangeRepository.save(tempHum1Ex);
+        this.mqttClient.subscribe(tempHum1Ex.getTopic());
+        this.mqttTemplate.convertAndSend(tempHum1Ex.getTopic(), tempHum1Ex, 1);
+
+
+
+
+    }
 
 
 
@@ -143,4 +183,4 @@ public class ServerApplication {
         //simpleMessageListenerContainer.addQueueNames("mqtt-subscription-arduino-homeqos0");
 
     }*/
-}
+// }
